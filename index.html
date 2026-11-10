@@ -56,7 +56,9 @@
 </form></div></section>
 </main>
 <footer class="wrap foot"><div><strong style="color:#fff">↗ Elevare Dev</strong><br>Inovação. Resultados. Crescimento.</div><div>© <span id="year"></span> Elevare Dev. Todos os direitos reservados.</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/config.js"></script>
 <script>
+const sb=window.supabase.createClient(window.ELEVARE_SUPABASE.url,window.ELEVARE_SUPABASE.publishableKey);
 const WHATSAPP_NUMBER = "5561998840757";
 document.getElementById('year').textContent = new Date().getFullYear();
 document.querySelectorAll('[data-plan]').forEach(a=>a.addEventListener('click',()=>{document.querySelector('[name=servico]').value='Outro projeto';document.querySelector('[name=mensagem]').value='Tenho interesse no plano '+a.dataset.plan+'.'}));
@@ -66,10 +68,8 @@ document.getElementById('leadForm').addEventListener('submit',async e=>{
  const d=Object.fromEntries(new FormData(form).entries());
  button.disabled=true; button.textContent='Enviando solicitação...'; status.textContent='Registrando sua solicitação...';
  try {
-   const response=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-     name:d.nome,company:d.empresa,email:d.email,whatsapp:d.whatsapp,service:d.servico,budget:d.investimento,message:d.mensagem
-   })});
-   if(!response.ok) throw new Error('Não foi possível registrar agora. Tente novamente ou fale pelo WhatsApp.');
+   const {error}=await sb.from('leads').insert({name:d.nome,company:d.empresa,email:d.email,whatsapp:d.whatsapp,service:d.servico,budget:d.investimento,message:d.mensagem});
+   if(error) throw new Error('Não foi possível registrar: '+error.message);
    status.textContent='Solicitação registrada! Vamos continuar pelo WhatsApp.';
    const msg='Olá, Elevare Dev! Acabei de enviar uma solicitação pelo site.\\nNome: '+d.nome+'\\nEmpresa: '+d.empresa+'\\nE-mail: '+d.email+'\\nWhatsApp: '+d.whatsapp+'\\nServiço: '+d.servico+'\\nInvestimento: '+d.investimento+'\\nProjeto: '+d.mensagem;
    window.open('https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg),'_blank','noopener');
