@@ -52,21 +52,32 @@
 <textarea name="mensagem" placeholder="Descreva brevemente o que precisa (opcional)" maxlength="1500"></textarea>
 <label style="grid-column:1/-1;color:#aeb5ce;font-size:12px"><input type="checkbox" required style="width:auto"> Autorizo o contato da Elevare Dev para tratar desta solicitação. Consulte a política de privacidade.</label>
 <button class="btn" type="submit">Enviar solicitação pelo WhatsApp ↗</button>
-<div id="formMsg" class="note" role="status" style="grid-column:1/-1">O formulário abrirá uma conversa no WhatsApp com os dados preenchidos. Nenhum dado é armazenado neste site.</div>
+<div id="formMsg" class="note" role="status" style="grid-column:1/-1">Seus dados serão enviados com segurança para nosso sistema de atendimento e também poderão abrir o WhatsApp.</div>
 </form></div></section>
 </main>
 <footer class="wrap foot"><div><strong style="color:#fff">↗ Elevare Dev</strong><br>Inovação. Resultados. Crescimento.</div><div>© <span id="year"></span> Elevare Dev. Todos os direitos reservados.</div></footer>
 <script>
-/* CONFIGURE antes de publicar: somente dígitos, com DDI 55 e DDD. Ex.: 5511999999999 */
 const WHATSAPP_NUMBER = "5561998840757";
 document.getElementById('year').textContent = new Date().getFullYear();
 document.querySelectorAll('[data-plan]').forEach(a=>a.addEventListener('click',()=>{document.querySelector('[name=servico]').value='Outro projeto';document.querySelector('[name=mensagem]').value='Tenho interesse no plano '+a.dataset.plan+'.'}));
-document.getElementById('leadForm').addEventListener('submit',e=>{
+document.getElementById('leadForm').addEventListener('submit',async e=>{
  e.preventDefault();
- if(!WHATSAPP_NUMBER){document.getElementById('formMsg').textContent='O WhatsApp comercial ainda precisa ser configurado antes de receber solicitações. Entre em contato pelo canal informado pela Elevare Dev.';return;}
- const d=Object.fromEntries(new FormData(e.target).entries());
- const msg='Olá, Elevare Dev! Gostaria de solicitar um orçamento.\nNome: '+d.nome+'\nEmpresa: '+d.empresa+'\nE-mail: '+d.email+'\nWhatsApp: '+d.whatsapp+'\nServiço: '+d.servico+'\nInvestimento: '+d.investimento+'\nProjeto: '+d.mensagem;
- window.open('https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg),'_blank','noopener');
+ const form=e.target, button=form.querySelector('button[type=submit]'), status=document.getElementById('formMsg');
+ const d=Object.fromEntries(new FormData(form).entries());
+ button.disabled=true; button.textContent='Enviando solicitação...'; status.textContent='Registrando sua solicitação...';
+ try {
+   const response=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+     name:d.nome,company:d.empresa,email:d.email,whatsapp:d.whatsapp,service:d.servico,budget:d.investimento,message:d.mensagem
+   })});
+   if(!response.ok) throw new Error('Não foi possível registrar agora. Tente novamente ou fale pelo WhatsApp.');
+   status.textContent='Solicitação registrada! Vamos continuar pelo WhatsApp.';
+   const msg='Olá, Elevare Dev! Acabei de enviar uma solicitação pelo site.\\nNome: '+d.nome+'\\nEmpresa: '+d.empresa+'\\nE-mail: '+d.email+'\\nWhatsApp: '+d.whatsapp+'\\nServiço: '+d.servico+'\\nInvestimento: '+d.investimento+'\\nProjeto: '+d.mensagem;
+   window.open('https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg),'_blank','noopener');
+   form.reset();
+ } catch(err) {
+   status.textContent=err.message+' Você também pode chamar diretamente no WhatsApp.';
+   if(WHATSAPP_NUMBER) window.open('https://wa.me/'+WHATSAPP_NUMBER,'_blank','noopener');
+ } finally {button.disabled=false;button.textContent='Enviar solicitação pelo WhatsApp ↗';}
 });
 </script>
 </body></html>
