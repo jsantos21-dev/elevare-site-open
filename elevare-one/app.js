@@ -2,7 +2,7 @@
   "use strict";
   const cfg = window.ELEVARE_ONE_CONFIG || {};
   const $ = (id) => document.getElementById(id);
-  const state = { client: null, user: null, organization: null, membership: null };
+  const state = { client: null, user: null, organization: null, membership: null, recoveryMode: false };
   const fmtDate = (v) => v ? new Date(v).toLocaleString("pt-BR", { dateStyle:"short", timeStyle:"short" }) : "—";
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const notify = (message, isError=false) => { const el=$("auth-message"); if(el){el.textContent=message;el.style.color=isError?"#e58c8c":"#9ccdb1";} };
@@ -25,6 +25,7 @@
     if(message) notify(message,true);
   }
   async function loadContext() {
+    if (state.recoveryMode) return false;
     const { data:{user}, error:userError } = await state.client.auth.getUser();
     if(userError) throw userError;
     if(!user) return false;
@@ -130,8 +131,16 @@
       $("login-button").disabled=true;return;
     }
     if(!window.supabase?.createClient){notify("Não foi possível carregar o serviço de autenticação.",true);return;}
+    const recoveryHash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const recoveryQuery = new URLSearchParams(window.location.search);
+    state.recoveryMode = recoveryHash.get("type") === "recovery" || recoveryQuery.get("type") === "recovery" || recoveryQuery.has("code");
     state.client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     bindActions();
+    if (state.recoveryMode) {
+      $("login-form").classList.add("hidden");
+      $("set-password-form").classList.remove("hidden");
+      $("password-message").textContent="Valide sua nova senha para concluir a recuperação da conta.";
+    }
     $("forgot-password-button").addEventListener("click",async()=>{
       const email=$("email").value.trim();
       if(!email){notify("Informe seu e-mail corporativo para receber o link de ativação ou recuperação.",true);$("email").focus();return;}
@@ -151,7 +160,10 @@
       const button=$("save-password-button");button.disabled=true;
       try{
         const {error}=await state.client.auth.updateUser({password});if(error)throw error;
-        $("password-message").textContent="Senha definida. Preparando seu acesso...";
+        state.recoveryMode=false;
+        window.history.replaceState({}, document.title, window.location.pathname);
+        $("password-message").textContent="Senha definida com sucesso. Preparando seu acesso...";
+        $("new-password").value="";$("confirm-password").value="";
         await loadContext();
       }catch(err){console.error("[ELEVARE ONE] set password",err);$("password-message").textContent="Não foi possível salvar a senha. Solicite um novo link e tente novamente.";}
       finally{button.disabled=false;}
@@ -164,12 +176,15 @@
     });
     state.client.auth.onAuthStateChange((event,session)=>{
       if(event==="PASSWORD_RECOVERY" && session){
+        state.recoveryMode=true;
         $("login-form").classList.add("hidden");$("set-password-form").classList.remove("hidden");
-        $("password-message").textContent="";
+        $("password-message").textContent="Defina e confirme sua nova senha para continuar.";
       }
-      if(event==="SIGNED_OUT")showLogin();
+      if(event==="SIGNED_OUT"){state.recoveryMode=false;showLogin();}
     });
-    try{await loadContext();}catch(err){fail(err);}
+    if (!state.recoveryMode) {
+      try{await loadContext();}catch(err){fail(err);}
+    }
   }
   document.addEventListener("DOMContentLoaded",init);
 })();
