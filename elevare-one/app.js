@@ -121,7 +121,7 @@
     $("member-list").innerHTML=table(state.members,[
       ["Usuário",r=>'<strong>'+esc(r.full_name||"Sem nome")+'</strong><br><small>'+esc(r.email)+'</small>'],
       ["Perfil",r=>esc(roleLabel(r.role))],
-      ["Estado",r=>'<span class="status-badge">'+esc(memberStatusLabel(r.status))+'</span>'],
+      ["Estado",r=>'<span class="status-badge">'+esc(r.status==="active"&&!r.email_confirmed_at?"E-mail pendente":memberStatusLabel(r.status))+'</span>'],
       ["Último acesso",r=>fmtDate(r.last_sign_in_at)],
       ["Adicionado em",r=>fmtDate(r.created_at)],
       ...(canManage?[["Ações",r=>r.user_id===state.user.id?'—':'<div class="member-actions"><button type="button" class="text-button member-action" data-member-action="name" data-member-id="'+esc(r.id)+'">Editar dados</button><button type="button" class="text-button member-action" data-member-action="role" data-member-id="'+esc(r.id)+'">Editar perfil</button><button type="button" class="text-button member-action '+(r.status==="active"?'member-danger':'')+'" data-member-action="status" data-member-id="'+esc(r.id)+'" data-next-status="'+(r.status==="active"?'suspended':'active')+'">'+(r.status==="active"?'Suspender':'Reativar')+'</button></div>']]:[])
