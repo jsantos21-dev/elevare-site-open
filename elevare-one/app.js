@@ -167,7 +167,7 @@
   async function refreshMembers() {
     const result=await adminRequest({action:"list"});
     state.members=result.members||[];
-    const canManage=["owner","admin"].includes(state.membership.role);
+    const canManage=state.isPlatformAdmin||["owner","admin"].includes(state.membership.role);
     $("new-member-button").classList.toggle("hidden",!canManage);
     $("member-list").innerHTML=table(state.members,[
       ["Usuário",r=>'<strong>'+esc(r.full_name||"Sem nome")+'</strong><br><small>'+esc(r.email)+'</small>'],
@@ -192,7 +192,7 @@
     $("new-member-button").addEventListener("click",()=>openModal("Adicionar usuário","O usuário receberá um convite por e-mail para configurar o acesso ao ELEVARE ONE.",[
       {name:"full_name",label:"Nome completo",required:true,maxlength:120},
       {name:"email",label:"E-mail corporativo",required:true,maxlength:254},
-      {name:"role",label:"Perfil de acesso",type:"select",required:true,options:(state.membership.role==="owner"?[{value:"admin",label:"Administrador"},{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}]:[{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}])}
+      {name:"role",label:"Perfil de acesso",type:"select",required:true,options:((state.isPlatformAdmin||state.membership.role==="owner")?[{value:"admin",label:"Administrador"},{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}]:[{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}])}
     ],async d=>{
       const result=await adminRequest({action:"create",full_name:d.full_name.trim(),email:d.email.trim(),role:d.role});
       workspaceNotice(result.message||"Usuário adicionado.");
