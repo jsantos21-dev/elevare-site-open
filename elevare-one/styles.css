@@ -8,3 +8,36 @@
 #view-owner .surface-card{margin-top:15px}
 #owner-org-list .text-button{white-space:nowrap}
 @media(max-width:440px){#view-owner .metric-grid{grid-template-columns:1fr 1fr}}
+
+
+/* ELEVARE ONE — navigation and enterprise workspace refinement */
+html,body{min-height:100%;scrollbar-color:#40564f #101922;scrollbar-width:thin}
+.sidebar{height:100dvh;min-height:0;overflow:hidden}
+.sidebar-brand,.org-switch,.owner-org-selector,.sidebar-bottom{flex-shrink:0}
+.main-nav{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;align-items:stretch;gap:4px;overflow-y:auto;overflow-x:hidden;padding:2px 4px 16px 0;margin-right:-7px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#52685e transparent}
+.main-nav::-webkit-scrollbar{width:6px}
+.main-nav::-webkit-scrollbar-track{background:transparent}
+.main-nav::-webkit-scrollbar-thumb{background:#40564f;border-radius:8px}
+.main-nav .nav-caption{flex:0 0 auto;margin-top:16px}
+.main-nav .nav-item{flex:0 0 auto;min-height:40px}
+.sidebar-bottom{margin-top:8px;padding-top:6px;background:var(--sidebar)}
+.sidebar-version{padding-bottom:2px}
+.nav-item:focus-visible,.outline-button:focus-visible,.primary-small:focus-visible,.text-button:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px}
+.main-area{min-width:0}
+.content{min-width:0}
+.table-wrap{max-width:100%;overscroll-behavior-x:contain}
+@media(max-height:760px) and (min-width:761px){
+ .sidebar{padding-top:16px;padding-bottom:10px}
+ .sidebar-brand{padding-bottom:14px}
+ .edition{margin-top:7px}
+ .org-switch{margin:9px 0 10px;padding:10px 8px}
+ .main-nav .nav-caption{margin-top:9px}
+ .main-nav .nav-item{min-height:36px;padding-top:8px;padding-bottom:8px}
+ .system-status{padding:8px}
+ .signout-button{padding:8px}
+}
+@media(max-width:760px){
+ .sidebar{height:100dvh;max-height:100dvh;overflow:hidden;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+ .main-nav{padding-bottom:20px}
+ .sidebar.open{overflow:hidden}
+}
