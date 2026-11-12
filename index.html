@@ -54,7 +54,7 @@
 <select name="servico" required><option value="">O que você precisa?</option><option>Site profissional</option><option>Landing page</option><option>Sistema ou painel administrativo</option><option>Automação ou integração</option><option>Loja virtual</option><option>Outro projeto</option></select>
 <select name="investimento"><option value="">Faixa de investimento (opcional)</option><option>Até R$ 2.000</option><option>R$ 2.000 a R$ 4.000</option><option>R$ 4.000 a R$ 6.000</option><option>Acima de R$ 6.000</option><option>Quero orientação</option></select>
 <textarea name="mensagem" placeholder="Descreva brevemente o que precisa (opcional)" maxlength="1500"></textarea>
-<label style="grid-column:1/-1;color:#aeb5ce;font-size:12px"><input type="checkbox" required style="width:auto"> Autorizo o contato da Elevare Dev para tratar desta solicitação. Leia nossa <a href="/privacidade.html" target="_blank" rel="noopener" style="color:#b89aff;text-decoration:underline">política de privacidade</a>.</label>
+<label style="grid-column:1/-1;color:#aeb5ce;font-size:12px"><input type="checkbox" name="consent" value="true" required style="width:auto"> Autorizo o contato da Elevare Dev para tratar desta solicitação. Leia nossa <a href="/privacidade.html" target="_blank" rel="noopener" style="color:#b89aff;text-decoration:underline">política de privacidade</a>.</label>
 <button class="btn" type="submit">Enviar solicitação pelo WhatsApp ↗</button>
 <div id="formMsg" class="note" role="status" style="grid-column:1/-1">Seus dados serão enviados com segurança para nosso sistema de atendimento e também poderão abrir o WhatsApp.</div>
 </form></div></section>
@@ -74,7 +74,7 @@ document.getElementById('leadForm').addEventListener('submit',async e=>{
  // Abre a janela de WhatsApp durante o clique do usuário para evitar bloqueio de pop-up após a gravação assíncrona.
  const waWindow=window.open('about:blank','_blank');
  try {
-   const {error}=await sb.from('leads').insert({name:d.nome,company:d.empresa,email:d.email,whatsapp:d.whatsapp,service:d.servico,budget:d.investimento,message:d.mensagem});
+   const {error}=await sb.from('leads').insert({name:d.nome,company:d.empresa,email:d.email,whatsapp:d.whatsapp,service:d.servico,budget:d.investimento,message:d.mensagem,consent:d.consent==='true'});
    if(error) throw new Error('Não foi possível registrar no sistema: '+error.message);
    status.textContent='Solicitação registrada! Continue pelo WhatsApp para conversar com a Elevare Dev.';
    const msg='Olá, Elevare Dev! Acabei de enviar uma solicitação pelo site.\nNome: '+d.nome+'\nEmpresa: '+d.empresa+'\nE-mail: '+d.email+'\nWhatsApp: '+d.whatsapp+'\nServiço: '+d.servico+'\nInvestimento: '+d.investimento+'\nProjeto: '+d.mensagem;
