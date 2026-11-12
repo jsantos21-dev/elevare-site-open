@@ -159,7 +159,7 @@
     el.textContent=message;el.style.borderColor=isError?"#9a5555":"#49665a";el.style.color=isError?"#efb0b0":"#cfe2d5";
   }
   async function adminRequest(payload) {
-    const {data,error}=await state.client.functions.invoke("elevare-user-admin",{body:payload});
+    const {data,error}=await state.client.functions.invoke("elevare-user-admin",{body:{...payload,organization_id:state.organization?.id}});
     if(error){let detail=error.message||"Falha na operação administrativa.";try{const body=await error.context.json();detail=body.error||detail;}catch{}throw new Error(detail);}
     if(data?.error) throw new Error(data.error);
     return data;
