@@ -20,6 +20,8 @@
   function showLogin(message="") {
     $("application").classList.add("hidden");
     $("auth-screen").classList.remove("hidden");
+    $("login-form").classList.remove("hidden");
+    $("set-password-form").classList.add("hidden");
     if(message) notify(message,true);
   }
   async function loadContext() {
@@ -130,13 +132,43 @@
     if(!window.supabase?.createClient){notify("Não foi possível carregar o serviço de autenticação.",true);return;}
     state.client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     bindActions();
+    $("forgot-password-button").addEventListener("click",async()=>{
+      const email=$("email").value.trim();
+      if(!email){notify("Informe seu e-mail corporativo para receber o link de ativação ou recuperação.",true);$("email").focus();return;}
+      const button=$("forgot-password-button");button.disabled=true;
+      try{
+        const {error}=await state.client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+"/"});
+        if(error) throw error;
+        notify("Se o endereço estiver cadastrado, enviaremos um link para definir ou redefinir sua senha. Verifique sua caixa de entrada e spam.");
+      }catch(err){console.error("[ELEVARE ONE] password recovery",err);notify("Não foi possível enviar o link. Verifique a configuração de redirecionamento ou contate o administrador.",true);}
+      finally{button.disabled=false;}
+    });
+    $("back-to-login-button").addEventListener("click",()=>showLogin());
+    $("set-password-form").addEventListener("submit",async e=>{
+      e.preventDefault();const password=$("new-password").value;const confirmation=$("confirm-password").value;
+      if(password.length<12){$("password-message").textContent="Use pelo menos 12 caracteres.";return;}
+      if(password!==confirmation){$("password-message").textContent="As senhas não coincidem.";return;}
+      const button=$("save-password-button");button.disabled=true;
+      try{
+        const {error}=await state.client.auth.updateUser({password});if(error)throw error;
+        $("password-message").textContent="Senha definida. Preparando seu acesso...";
+        await loadContext();
+      }catch(err){console.error("[ELEVARE ONE] set password",err);$("password-message").textContent="Não foi possível salvar a senha. Solicite um novo link e tente novamente.";}
+      finally{button.disabled=false;}
+    });
     $("login-form").addEventListener("submit",async e=>{
       e.preventDefault();const button=$("login-button");button.disabled=true;button.textContent="Validando credenciais...";
       try{const f=new FormData(e.currentTarget);const {error}=await state.client.auth.signInWithPassword({email:f.get("email"),password:f.get("password")});if(error)throw error;await loadContext();}
       catch(err){notify("Não foi possível autenticar. Confira as credenciais ou procure o administrador.",true);}
       finally{button.disabled=false;button.innerHTML='Entrar na plataforma <span>→</span>';}
     });
-    state.client.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT")showLogin();});
+    state.client.auth.onAuthStateChange((event,session)=>{
+      if(event==="PASSWORD_RECOVERY" && session){
+        $("login-form").classList.add("hidden");$("set-password-form").classList.remove("hidden");
+        $("password-message").textContent="";
+      }
+      if(event==="SIGNED_OUT")showLogin();
+    });
     try{await loadContext();}catch(err){fail(err);}
   }
   document.addEventListener("DOMContentLoaded",init);
