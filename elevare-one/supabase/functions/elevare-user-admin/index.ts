@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
             id: m.id, user_id: m.user_id, role: m.role, status: m.status,
             created_at: m.created_at, email: u?.email || "E-mail indisponível",
             full_name: u?.user_metadata?.full_name || u?.user_metadata?.name || "",
-            last_sign_in_at: u?.last_sign_in_at || null,
+            last_sign_in_at: u?.last_sign_in_at || null, email_confirmed_at: u?.email_confirmed_at || null,
           };
         }),
       });
