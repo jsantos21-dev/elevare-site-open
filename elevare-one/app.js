@@ -2,7 +2,7 @@
   "use strict";
   const cfg = window.ELEVARE_ONE_CONFIG || {};
   const $ = (id) => document.getElementById(id);
-  const state = { client: null, user: null, organization: null, membership: null, recoveryMode: false };
+  const state = { client: null, user: null, organization: null, membership: null, members: [], recoveryMode: false };
   const fmtDate = (v) => v ? new Date(v).toLocaleString("pt-BR", { dateStyle:"short", timeStyle:"short" }) : "—";
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const notify = (message, isError=false) => { const el=$("auth-message"); if(el){el.textContent=message;el.style.color=isError?"#e58c8c":"#9ccdb1";} };
@@ -78,9 +78,7 @@
     const {data:ints,error:intError}=await state.client.from("integrations").select("id,name,provider,status,last_synced_at,created_at").eq("organization_id",org).order("created_at",{ascending:false}).limit(100);
     if(intError) throw intError;
     $("integration-list").innerHTML=table(ints,[["Integração",r=>'<strong>'+esc(r.name)+'</strong>'],["Provedor",r=>esc(r.provider)],["Estado",r=>'<span class="status-badge">'+esc(r.status)+'</span>'],["Última sincronização",r=>fmtDate(r.last_synced_at)]]);
-    const {data:memberRows,error:memberError}=await state.client.from("organization_members").select("id,user_id,role,status,created_at").eq("organization_id",org).order("created_at",{ascending:false}).limit(100);
-    if(memberError) throw memberError;
-    $("member-list").innerHTML=table(memberRows,[["Identificador",r=>esc(r.user_id)],["Perfil",r=>esc(r.role)],["Estado",r=>'<span class="status-badge">'+esc(r.status)+'</span>'],["Desde",r=>fmtDate(r.created_at)]]);
+    await refreshMembers();
     const {data:audit,error:auditError}=await state.client.from("audit_logs").select("id,action,entity_type,entity_id,created_at,actor_user_id").eq("organization_id",org).order("created_at",{ascending:false}).limit(200);
     if(auditError) throw auditError;
     $("audit-list").innerHTML=table(audit,[["Ação",r=>esc(r.action)],["Tipo",r=>esc(r.entity_type)],["ID do recurso",r=>esc(r.entity_id)],["Responsável",r=>esc(r.actor_user_id)],["Data",r=>fmtDate(r.created_at)]]);
@@ -95,17 +93,73 @@
   function openModal(title,description,fields,onSave) {
     const root=$("modal-root");
     root.innerHTML='<div class="modal-backdrop"><form class="modal-card" id="record-form"><h3>'+esc(title)+'</h3><p>'+esc(description)+'</p>'+
-      fields.map(f=>'<label for="field-'+esc(f.name)+'">'+esc(f.label)+'</label><input id="field-'+esc(f.name)+'" name="'+esc(f.name)+'" '+(f.required?'required':'')+' maxlength="'+(f.maxlength||160)+'" placeholder="'+esc(f.placeholder||"")+'">').join('')+
+      fields.map(f=>f.type==="select" ? '<label for="field-'+esc(f.name)+'">'+esc(f.label)+'</label><select id="field-'+esc(f.name)+'" name="'+esc(f.name)+'" '+(f.required?'required':'')+'>'+(f.options||[]).map(o=>'<option value="'+esc(o.value)+'">'+esc(o.label)+'</option>').join('')+'</select>' : '<label for="field-'+esc(f.name)+'">'+esc(f.label)+'</label><input id="field-'+esc(f.name)+'" name="'+esc(f.name)+'" '+(f.required?'required':'')+' maxlength="'+(f.maxlength||160)+'" placeholder="'+esc(f.placeholder||"")+'">').join('')+
       '<div id="modal-error" class="form-message" role="alert"></div><div class="modal-actions"><button type="button" class="cancel-button" id="modal-cancel">Cancelar</button><button type="submit" class="primary-small">Salvar registro</button></div></form></div>';
     $("modal-cancel").onclick=()=>root.innerHTML="";
-    $("record-form").onsubmit=async e=>{e.preventDefault();const button=e.target.querySelector('[type=submit]');button.disabled=true;try{const data=Object.fromEntries(new FormData(e.target));await onSave(data);root.innerHTML="";await refreshWorkspace();}catch(err){console.error(err);$("modal-error").textContent="Não foi possível salvar. Verifique os campos e suas permissões.";}finally{button.disabled=false;}};
+    $("record-form").onsubmit=async e=>{e.preventDefault();const button=e.target.querySelector('[type=submit]');button.disabled=true;try{const data=Object.fromEntries(new FormData(e.target));await onSave(data);root.innerHTML="";await refreshWorkspace();}catch(err){console.error(err);$("modal-error").textContent=err?.message||"Não foi possível salvar. Verifique os campos e suas permissões.";}finally{button.disabled=false;}};
   }
+
+  const roleLabel = role => ({owner:"Proprietário",admin:"Administrador",manager:"Gerente",member:"Membro",viewer:"Visualizador"}[role]||role);
+  const memberStatusLabel = status => ({active:"Ativo",suspended:"Suspenso",invited:"Convite pendente"}[status]||status);
+  async function adminRequest(payload) {
+    const {data,error}=await state.client.functions.invoke("elevare-user-admin",{body:payload});
+    if(error) throw new Error(error.context?.body?.error || error.message || "Falha na operação administrativa.");
+    if(data?.error) throw new Error(data.error);
+    return data;
+  }
+  async function refreshMembers() {
+    const result=await adminRequest({action:"list"});
+    state.members=result.members||[];
+    const canManage=["owner","admin"].includes(state.membership.role);
+    $("new-member-button").classList.toggle("hidden",!canManage);
+    $("member-list").innerHTML=table(state.members,[
+      ["Usuário",r=>'<strong>'+esc(r.full_name||"Sem nome")+'</strong><br><small>'+esc(r.email)+'</small>'],
+      ["Perfil",r=>esc(roleLabel(r.role))],
+      ["Estado",r=>'<span class="status-badge">'+esc(memberStatusLabel(r.status))+'</span>'],
+      ["Último acesso",r=>fmtDate(r.last_sign_in_at)],
+      ["Adicionado em",r=>fmtDate(r.created_at)],
+      ...(canManage?[["Ações",r=>r.user_id===state.user.id?'—':'<div class="member-actions"><button type="button" class="text-button member-action" data-member-action="role" data-member-id="'+esc(r.id)+'">Editar perfil</button><button type="button" class="text-button member-action '+(r.status==="active"?'member-danger':'')+'" data-member-action="status" data-member-id="'+esc(r.id)+'" data-next-status="'+(r.status==="active"?'suspended':'active')+'">'+(r.status==="active"?'Suspender':'Reativar')+'</button></div>']]:[])
+    ]);
+  }
+
   function bindActions() {
     document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.view)));
     document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.go)));
     $("refresh-button").addEventListener("click",()=>refreshWorkspace().catch(fail));
     $("menu-button").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
     $("signout-button").addEventListener("click",async()=>{await state.client.auth.signOut();showLogin("Sessão encerrada.");});
+
+    $("new-member-button").addEventListener("click",()=>openModal("Adicionar usuário","O usuário receberá um convite por e-mail para configurar o acesso ao ELEVARE ONE.",[
+      {name:"full_name",label:"Nome completo",required:true,maxlength:120},
+      {name:"email",label:"E-mail corporativo",required:true,maxlength:254},
+      {name:"role",label:"Perfil de acesso",type:"select",required:true,options:(state.membership.role==="owner"?[{value:"admin",label:"Administrador"},{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}]:[{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}])}
+    ],async d=>{
+      const result=await adminRequest({action:"create",full_name:d.full_name.trim(),email:d.email.trim(),role:d.role});
+      notify(result.message||"Usuário adicionado.");
+    }));
+    $("member-list").addEventListener("click",async e=>{
+      const button=e.target.closest("[data-member-action]");
+      if(!button)return;
+      const member=state.members.find(m=>m.id===button.dataset.memberId);
+      if(!member)return;
+      if(button.dataset.memberAction==="role"){
+        const options=state.membership.role==="owner"
+          ?[{value:"owner",label:"Proprietário"},{value:"admin",label:"Administrador"},{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}]
+          :[{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}];
+        openModal("Alterar perfil de acesso","Usuário: "+(member.full_name||member.email),[
+          {name:"role",label:"Novo perfil",type:"select",required:true,options}
+        ],async d=>{const result=await adminRequest({action:"update_role",member_id:member.id,role:d.role});notify(result.message||"Perfil atualizado.");});
+        const select=$("field-role");if(select)select.value=member.role;
+      } else if(button.dataset.memberAction==="status"){
+        const next=button.dataset.nextStatus;
+        const verb=next==="suspended"?"suspender":"reativar";
+        if(!window.confirm("Confirma "+verb+" o acesso de "+(member.full_name||member.email)+"?"))return;
+        button.disabled=true;
+        try{const result=await adminRequest({action:"set_status",member_id:member.id,status:next});await refreshWorkspace();notify(result.message||"Acesso atualizado.");}
+        catch(err){notify(err.message||"Não foi possível alterar o acesso.",true);}
+        finally{button.disabled=false;}
+      }
+    });
     $("new-kpi-button").addEventListener("click",()=>openModal("Novo indicador","Cadastre um KPI para acompanhar a operação.",[
       {name:"name",label:"Nome do indicador",required:true},{name:"code",label:"Código único",required:true},{name:"unit",label:"Unidade de medida",placeholder:"%, R$, unidades..."},{name:"target_value",label:"Meta numérica"},{name:"current_value",label:"Valor atual"}],async d=>{
       const payload={organization_id:state.organization.id,name:d.name.trim(),code:d.code.trim().toUpperCase(),unit:d.unit.trim()||null,target_value:d.target_value===""?null:Number(d.target_value),current_value:d.current_value===""?null:Number(d.current_value),created_by:state.user.id};
