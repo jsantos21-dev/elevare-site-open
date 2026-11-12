@@ -2,7 +2,7 @@
   "use strict";
   const cfg = window.ELEVARE_ONE_CONFIG || {};
   const $ = (id) => document.getElementById(id);
-  const state = { client: null, user: null, organization: null, membership: null, members: [], recoveryMode: false };
+  const state = { client: null, user: null, organization: null, membership: null, members: [], recoveryMode: false, isPlatformAdmin: false, organizations: [] };
   const fmtDate = (v) => v ? new Date(v).toLocaleString("pt-BR", { dateStyle:"short", timeStyle:"short" }) : "—";
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const notify = (message, isError=false) => { const el=$("auth-message"); if(el){el.textContent=message;el.style.color=isError?"#e58c8c":"#9ccdb1";} };
@@ -30,6 +30,31 @@
     if(userError) throw userError;
     if(!user) return false;
     state.user=user;
+
+    const {data:isOwner,error:ownerError}=await state.client.rpc("is_platform_admin");
+    if(ownerError) throw ownerError;
+    state.isPlatformAdmin=!!isOwner;
+
+    if(state.isPlatformAdmin) {
+      const {data:organizations,error:orgError}=await state.client.from("organizations")
+        .select("id,name,slug,status,created_at").order("name",{ascending:true}).limit(500);
+      if(orgError) throw orgError;
+      state.organizations=organizations||[];
+      state.membership={role:"platform_owner"};
+      $("user-name").textContent=user.user_metadata?.full_name||user.email||"Proprietário";
+      $("user-role").textContent="Proprietário da plataforma";
+      $("user-avatar").textContent=(user.user_metadata?.full_name||user.email||"E").trim().charAt(0).toUpperCase();
+      document.querySelectorAll(".owner-only").forEach(el=>el.classList.remove("hidden"));
+      $("owner-org-selector").classList.remove("hidden");
+      $("owner-org-selector").innerHTML='<option value="">Selecionar empresa...</option>'+state.organizations.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>').join("");
+      $("org-label").textContent="ACESSO GLOBAL";
+      $("org-name").textContent="Todas as empresas";
+      showApplication();
+      await refreshOwnerConsole();
+      navigate("owner");
+      return true;
+    }
+
     const {data:memberships,error} = await state.client.from("organization_members")
       .select("organization_id, role, status, organizations(id,name,slug)")
       .eq("user_id",user.id).eq("status","active").limit(2);
@@ -54,6 +79,32 @@
     showApplication();
     await refreshWorkspace();
     return true;
+  }
+  async function refreshOwnerConsole() {
+    const {data:organizations,error}=await state.client.from("organizations")
+      .select("id,name,slug,status,created_at").order("name",{ascending:true}).limit(500);
+    if(error) throw error;
+    state.organizations=organizations||[];
+    setMetric("owner-metric-orgs",state.organizations.length);
+    setMetric("owner-metric-active",state.organizations.filter(o=>o.status==="active").length);
+    $("owner-org-list").innerHTML=table(state.organizations,[
+      ["Empresa",o=>'<strong>'+esc(o.name)+'</strong><br><small>'+esc(o.slug||"")+'</small>'],
+      ["Situação",o=>'<span class="status-badge">'+esc(o.status||"—")+'</span>'],
+      ["Criada em",o=>fmtDate(o.created_at)],
+      ["Acesso",o=>'<button type="button" class="text-button" data-owner-open="'+esc(o.id)+'">Abrir empresa →</button>']
+    ]);
+    $("owner-org-selector").innerHTML='<option value="">Selecionar empresa...</option>'+state.organizations.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.name)+'</option>').join("");
+  }
+  async function openOrganization(organizationId) {
+    if(!state.isPlatformAdmin) throw new Error("Acesso não autorizado.");
+    const organization=state.organizations.find(o=>o.id===organizationId);
+    if(!organization) throw new Error("Organização não encontrada.");
+    state.organization=organization;
+    $("org-label").textContent="EMPRESA SELECIONADA";
+    $("org-name").textContent=organization.name;
+    $("owner-org-selector").value=organization.id;
+    await refreshWorkspace();
+    navigate("overview");
   }
   async function countRows(tableName) {
     const {count,error}=await state.client.from(tableName).select("id",{count:"exact",head:true}).eq("organization_id",state.organization.id);
@@ -134,6 +185,9 @@
     $("refresh-button").addEventListener("click",()=>refreshWorkspace().catch(fail));
     $("menu-button").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
     $("signout-button").addEventListener("click",async()=>{await state.client.auth.signOut();showLogin("Sessão encerrada.");});
+    $("owner-refresh-button")?.addEventListener("click",()=>refreshOwnerConsole().catch(fail));
+    $("owner-org-selector")?.addEventListener("change",e=>{if(e.target.value)openOrganization(e.target.value).catch(fail);else{$("org-name").textContent="Todas as empresas";$("org-label").textContent="ACESSO GLOBAL";navigate("owner");}});
+    $("owner-org-list")?.addEventListener("click",e=>{const button=e.target.closest("[data-owner-open]");if(button)openOrganization(button.dataset.ownerOpen).catch(fail);});
 
     $("new-member-button").addEventListener("click",()=>openModal("Adicionar usuário","O usuário receberá um convite por e-mail para configurar o acesso ao ELEVARE ONE.",[
       {name:"full_name",label:"Nome completo",required:true,maxlength:120},
