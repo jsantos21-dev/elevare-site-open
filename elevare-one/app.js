@@ -193,13 +193,14 @@
     if(!window.supabase?.createClient){notify("Não foi possível carregar o serviço de autenticação.",true);return;}
     const recoveryHash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const recoveryQuery = new URLSearchParams(window.location.search);
-    state.recoveryMode = recoveryHash.get("type") === "recovery" || recoveryQuery.get("type") === "recovery" || recoveryQuery.has("code");
+    const inviteMode = recoveryHash.get("type") === "invite" || recoveryQuery.get("type") === "invite";
+    state.recoveryMode = recoveryHash.get("type") === "recovery" || recoveryQuery.get("type") === "recovery" || inviteMode || recoveryQuery.has("code");
     state.client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     bindActions();
     if (state.recoveryMode) {
       $("login-form").classList.add("hidden");
       $("set-password-form").classList.remove("hidden");
-      $("password-message").textContent="Valide sua nova senha para concluir a recuperação da conta.";
+      $("password-message").textContent=inviteMode?"Defina sua senha para ativar seu acesso ao ELEVARE ONE.":"Valide sua nova senha para concluir a recuperação da conta.";
     }
     $("forgot-password-button").addEventListener("click",async()=>{
       const email=$("email").value.trim();
