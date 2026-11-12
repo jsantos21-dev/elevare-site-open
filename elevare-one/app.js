@@ -101,9 +101,15 @@
 
   const roleLabel = role => ({owner:"Proprietário",admin:"Administrador",manager:"Gerente",member:"Membro",viewer:"Visualizador"}[role]||role);
   const memberStatusLabel = status => ({active:"Ativo",suspended:"Suspenso",invited:"Convite pendente"}[status]||status);
+  function workspaceNotice(message,isError=false) {
+    const content=document.querySelector(".content");
+    let el=$("workspace-notice");
+    if(!el){el=document.createElement("div");el.id="workspace-notice";el.setAttribute("role","status");el.style.cssText="margin:0 0 18px;padding:11px 14px;border:1px solid #49665a;border-radius:6px;background:#1a2a31;color:#cfe2d5;font-size:11px";content.prepend(el);}
+    el.textContent=message;el.style.borderColor=isError?"#9a5555":"#49665a";el.style.color=isError?"#efb0b0":"#cfe2d5";
+  }
   async function adminRequest(payload) {
     const {data,error}=await state.client.functions.invoke("elevare-user-admin",{body:payload});
-    if(error) throw new Error(error.context?.body?.error || error.message || "Falha na operação administrativa.");
+    if(error){let detail=error.message||"Falha na operação administrativa.";try{const body=await error.context.json();detail=body.error||detail;}catch{}throw new Error(detail);}
     if(data?.error) throw new Error(data.error);
     return data;
   }
@@ -135,7 +141,7 @@
       {name:"role",label:"Perfil de acesso",type:"select",required:true,options:(state.membership.role==="owner"?[{value:"admin",label:"Administrador"},{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}]:[{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}])}
     ],async d=>{
       const result=await adminRequest({action:"create",full_name:d.full_name.trim(),email:d.email.trim(),role:d.role});
-      notify(result.message||"Usuário adicionado.");
+      workspaceNotice(result.message||"Usuário adicionado.");
     }));
     $("member-list").addEventListener("click",async e=>{
       const button=e.target.closest("[data-member-action]");
@@ -155,8 +161,8 @@
         const verb=next==="suspended"?"suspender":"reativar";
         if(!window.confirm("Confirma "+verb+" o acesso de "+(member.full_name||member.email)+"?"))return;
         button.disabled=true;
-        try{const result=await adminRequest({action:"set_status",member_id:member.id,status:next});await refreshWorkspace();notify(result.message||"Acesso atualizado.");}
-        catch(err){notify(err.message||"Não foi possível alterar o acesso.",true);}
+        try{const result=await adminRequest({action:"set_status",member_id:member.id,status:next});await refreshWorkspace();workspaceNotice(result.message||"Acesso atualizado.");}
+        catch(err){workspaceNotice(err.message||"Não foi possível alterar o acesso.",true);}
         finally{button.disabled=false;}
       }
     });
