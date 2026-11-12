@@ -31,9 +31,16 @@
     if(!user) return false;
     state.user=user;
 
-    const {data:isOwner,error:ownerError}=await state.client.rpc("is_platform_admin");
-    if(ownerError) throw ownerError;
-    state.isPlatformAdmin=!!isOwner;
+    // A falha na consulta de privilégio global não pode bloquear a autenticação.
+    // O acesso comum continua sendo validado pelas associações/RLS abaixo.
+    try {
+      const {data:isOwner,error:ownerError}=await state.client.rpc("is_platform_admin");
+      if(ownerError) console.warn("[ELEVARE ONE] Não foi possível verificar o perfil de proprietário; seguindo com acesso organizacional.",ownerError);
+      else state.isPlatformAdmin=!!isOwner;
+    } catch(ownerCheckError) {
+      console.warn("[ELEVARE ONE] Verificação de proprietário indisponível; seguindo com acesso organizacional.",ownerCheckError);
+      state.isPlatformAdmin=false;
+    }
 
     if(state.isPlatformAdmin) {
       const {data:organizations,error:orgError}=await state.client.from("organizations")
