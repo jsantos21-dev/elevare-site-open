@@ -149,7 +149,7 @@
         const {error}=await state.client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+"/"});
         if(error) throw error;
         notify("Se o endereço estiver cadastrado, enviaremos um link para definir ou redefinir sua senha. Verifique sua caixa de entrada e spam.");
-      }catch(err){console.error("[ELEVARE ONE] password recovery",err);notify("Não foi possível enviar o link. Verifique a configuração de redirecionamento ou contate o administrador.",true);}
+      }catch(err){console.error("[ELEVARE ONE] password recovery",err);const code=err?.code||err?.error_code||"";const status=err?.status||err?.statusCode||0;if(code==="over_email_send_rate_limit"||status===429){notify("Limite temporário de envio de e-mails atingido. Não solicite novos links agora; aguarde a liberação do Supabase ou use o suporte administrativo.",true);}else{notify("Não foi possível enviar o link: "+(err?.message||"erro de autenticação")+". Verifique a configuração de e-mail ou contate o administrador.",true);}}
       finally{button.disabled=false;}
     });
     $("back-to-login-button").addEventListener("click",()=>showLogin());
