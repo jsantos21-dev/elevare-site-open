@@ -186,6 +186,19 @@ Deno.serve(async (req: Request) => {
     }
     if (target.user_id === actor.id) return json({ error: "Por segurança, não é permitido alterar o próprio acesso por esta tela." }, 400);
 
+    if (action === "update_name") {
+      const fullName = String(body.full_name || "").trim();
+      if (fullName.length < 2 || fullName.length > 120) return json({ error: "Informe um nome entre 2 e 120 caracteres." }, 400);
+      const { data: targetUser, error: userLookupError } = await admin.auth.admin.getUserById(target.user_id);
+      if (userLookupError) throw userLookupError;
+      const { error } = await admin.auth.admin.updateUserById(target.user_id, {
+        user_metadata: { ...(targetUser.user.user_metadata || {}), full_name: fullName },
+      });
+      if (error) throw error;
+      await writeAudit("member.profile_updated", memberId, { full_name: fullName });
+      return json({ ok: true, message: "Dados do usuário atualizados." });
+    }
+
     if (action === "update_role") {
       const role = String(body.role || "");
       if (!["owner", "admin", "manager", "member", "viewer"].includes(role)) return json({ error: "Perfil inválido." }, 400);
