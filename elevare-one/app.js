@@ -298,8 +298,8 @@
     $("login-form").addEventListener("submit",async e=>{
       e.preventDefault();const button=$("login-button");button.disabled=true;button.textContent="Validando credenciais...";
       try{const f=new FormData(e.currentTarget);const {error}=await state.client.auth.signInWithPassword({email:f.get("email"),password:f.get("password")});if(error)throw error;await loadContext();}
-      catch(err){notify("Não foi possível autenticar. Confira as credenciais ou procure o administrador.",true);}
-      finally{button.disabled=false;button.innerHTML='Entrar na plataforma <span>→</span>';}
+      catch(err){console.error("[ELEVARE ONE] login/context",err);const detail=err?.message||err?.error_description||"Falha desconhecida ao carregar o acesso.";notify("Falha após validar o login: "+detail,true);}
+      finally{button.disabled=false;button.innerHTML='Entrar na plataforma <span>→</span>'}
     });
     state.client.auth.onAuthStateChange((event,session)=>{
       if(event==="PASSWORD_RECOVERY" && session){
