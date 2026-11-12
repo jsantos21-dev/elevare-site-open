@@ -41,3 +41,41 @@ html,body{min-height:100%;scrollbar-color:#40564f #101922;scrollbar-width:thin}
  .main-nav{padding-bottom:20px}
  .sidebar.open{overflow:hidden}
 }
+
+
+/* Product design system refinement — ELEVARE ONE */
+:root{--bg:#091117;--sidebar:#0d1820;--surface:#111e27;--surface-2:#162630;--line:#2b4048;--line-soft:#20323a;--accent:#b9dfca;--accent-strong:#8fc4a8}
+body{background:radial-gradient(ellipse at 75% -20%,#24423b30,transparent 42%),var(--bg)}
+.sidebar{background:linear-gradient(180deg,#101e26 0%,#0c161e 100%);border-right-color:#2b4148;box-shadow:10px 0 35px #0002}
+.sidebar-brand{padding-bottom:20px;border-bottom-color:#30434a}
+.brand-symbol{border-radius:8px;box-shadow:inset 0 0 18px #8fc4a81a}
+.org-switch{background:linear-gradient(110deg,#1b302f66,#ffffff03);border-color:#3b5650}
+.org-switch:hover{border-color:#6d9581}
+.nav-caption{color:#80949a;letter-spacing:1.9px}
+.nav-item{font-size:12px;min-height:41px;transition:background .16s,border-color .16s,color .16s}
+.nav-item.active{background:linear-gradient(100deg,#9bcbb51c,#9bcbb506);border-color:#9bcbb52b;box-shadow:inset 2px 0 #9bcbb5}
+.nav-icon{color:#a9d4bd}
+.sidebar-bottom{background:linear-gradient(180deg,#0d1820,#0b141b)}
+.topbar{background:#091117ed;border-bottom-color:#263a42}
+.environment-pill{border-radius:99px}
+.content{padding-top:42px}
+.page-heading h1{font-size:32px;letter-spacing:-1.4px}
+.welcome-strip{position:relative;background:radial-gradient(ellipse at 90% 50%,#9bcbb516,transparent 38%),linear-gradient(105deg,#172b31,#14242b 60%,#1a302d);border-color:#45645a66;min-height:190px}
+.welcome-strip:after{content:"";position:absolute;right:0;top:0;width:3px;height:100%;background:linear-gradient(180deg,transparent,var(--accent-strong),transparent);opacity:.75}
+.metric-card,.surface-card{background:linear-gradient(145deg,#14232c,#101b23);border-color:#2a3e47;box-shadow:0 8px 24px #00000012}
+.metric-card{transition:transform .18s,border-color .18s}
+.metric-card:hover{transform:translateY(-2px);border-color:#557365}
+.metric-card>strong{font-size:29px}
+.surface-card{border-radius:9px}
+.card-heading{padding-bottom:12px;border-bottom:1px solid #ffffff0c}
+.module-hero{background:radial-gradient(ellipse at 90% 20%,#9bcbb514,transparent 40%),linear-gradient(110deg,#1a3035,#13232b);border-color:#49665b66;padding:34px}
+.flow-hero{background:radial-gradient(ellipse at 90% 20%,#9bb9d214,transparent 40%),linear-gradient(110deg,#202c36,#15222b)}
+.connect-hero{background:radial-gradient(ellipse at 90% 20%,#82c8c214,transparent 40%),linear-gradient(110deg,#1c3333,#14272a)}
+.data-table th{background:#ffffff04;position:sticky;top:0}
+.data-table tbody tr:hover{background:#ffffff05}
+.data-table td{vertical-align:middle}
+.status-badge{border:1px solid #8dc5a51c}
+.primary-small{box-shadow:0 4px 14px #9bcbb51c}
+.outline-button{border-radius:6px}
+.modal-card{border-radius:12px;background:linear-gradient(145deg,#192a33,#111d25);border-color:#486057}
+@media(max-width:760px){.content{padding-top:27px}.page-heading h1{font-size:28px}.module-hero{padding:25px}}
