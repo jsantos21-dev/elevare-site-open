@@ -42,8 +42,11 @@
 <div id="application" class="app-shell hidden">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand"><a class="wordmark" href="#"><span class="brand-symbol">E</span><span>ELEVARE <b>ONE</b></span></a><span class="edition">ENTERPRISE</span></div>
-    <div class="org-switch"><span class="org-avatar">O</span><span><small>ORGANIZAÇÃO</small><strong id="org-name">Carregando...</strong></span><span class="chevron">⌄</span></div>
+    <div class="org-switch"><span class="org-avatar">O</span><span><small id="org-label">ORGANIZAÇÃO</small><strong id="org-name">Carregando...</strong></span><span class="chevron">⌄</span></div>
+    <select id="owner-org-selector" class="owner-org-selector hidden" aria-label="Selecionar empresa"><option value="">Selecionar empresa</option></select>
     <nav class="main-nav" aria-label="Navegação principal">
+      <span class="nav-caption owner-only hidden">PROPRIETÁRIO DA PLATAFORMA</span>
+      <button class="nav-item owner-only hidden" data-view="owner"><span class="nav-icon">◎</span> Todas as empresas</button>
       <span class="nav-caption">WORKSPACE</span>
       <button class="nav-item active" data-view="overview"><span class="nav-icon">◫</span> Visão geral</button>
       <span class="nav-caption">PLATAFORMA</span>
@@ -59,6 +62,12 @@
   <main class="main-area">
     <header class="topbar"><button id="menu-button" class="menu-button" aria-label="Abrir menu">☰</button><div class="breadcrumbs">Workspace <span>/</span> <strong id="breadcrumb-current">Visão geral</strong></div><div class="topbar-right"><span class="environment-pill"><i></i> AMBIENTE CORPORATIVO</span><div class="user-chip"><span id="user-avatar" class="user-avatar">U</span><span><strong id="user-name">Usuário</strong><small id="user-role">Membro</small></span></div></div></header>
     <div class="content">
+      <section id="view-owner" class="view-section hidden">
+        <div class="page-heading"><div><span class="eyebrow">PLATFORM OWNER / GLOBAL</span><h1>Console do proprietário</h1><p>Visão global das organizações cadastradas na plataforma.</p></div><button id="owner-refresh-button" class="outline-button">↻ Atualizar empresas</button></div>
+        <div class="welcome-strip"><div><span class="eyebrow">ACESSO GLOBAL AUTORIZADO</span><h2>Controle de todas as organizações.</h2><p>Os dados permanecem isolados para cada empresa. Selecione uma organização para abrir seu ambiente.</p></div><div class="welcome-mark">E<span>.</span></div></div>
+        <div class="metric-grid"><article class="metric-card"><div class="metric-top"><span>Empresas cadastradas</span><span class="metric-icon">▦</span></div><strong id="owner-metric-orgs">—</strong><small>Organizações na plataforma</small></article><article class="metric-card"><div class="metric-top"><span>Empresas ativas</span><span class="metric-icon">✓</span></div><strong id="owner-metric-active">—</strong><small>Com status ativo</small></article></div>
+        <div class="surface-card"><div class="card-heading"><div><h3>Organizações</h3><p>Selecione uma empresa para abrir seu workspace.</p></div></div><div id="owner-org-list" class="empty-state">Carregando organizações...</div></div>
+      </section>
       <section id="view-overview" class="view-section">
         <div class="page-heading"><div><span class="eyebrow">WORKSPACE / OVERVIEW</span><h1>Visão geral</h1><p>Acompanhe os principais recursos e a atividade da sua organização.</p></div><div class="heading-meta"><span id="today-label"></span><button id="refresh-button" class="outline-button">↻ Atualizar dados</button></div></div>
         <div class="welcome-strip"><div><span class="eyebrow">ELEVARE ONE</span><h2>Uma operação. Uma visão.</h2><p>Os indicadores serão apresentados conforme os módulos habilitados e as fontes de dados conectadas.</p></div><div class="welcome-mark">E<span>.</span></div></div>
