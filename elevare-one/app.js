@@ -79,9 +79,9 @@
     if(intError) throw intError;
     $("integration-list").innerHTML=table(ints,[["Integração",r=>'<strong>'+esc(r.name)+'</strong>'],["Provedor",r=>esc(r.provider)],["Estado",r=>'<span class="status-badge">'+esc(r.status)+'</span>'],["Última sincronização",r=>fmtDate(r.last_synced_at)]]);
     await refreshMembers();
-    const {data:audit,error:auditError}=await state.client.from("audit_logs").select("id,action,entity_type,entity_id,created_at,actor_user_id").eq("organization_id",org).order("created_at",{ascending:false}).limit(200);
+    const {data:audit,error:auditError}=await state.client.from("audit_logs").select("id,action,entity_type,entity_id,metadata,created_at,actor_user_id").eq("organization_id",org).order("created_at",{ascending:false}).limit(200);
     if(auditError) throw auditError;
-    $("audit-list").innerHTML=table(audit,[["Ação",r=>esc(r.action)],["Tipo",r=>esc(r.entity_type)],["ID do recurso",r=>esc(r.entity_id)],["Responsável",r=>esc(r.actor_user_id)],["Data",r=>fmtDate(r.created_at)]]);
+    $("audit-list").innerHTML=table(audit,[["Ação",r=>esc(r.action)],["Tipo",r=>esc(r.entity_type)],["ID do recurso",r=>esc(r.entity_id)],["Detalhes",r=>esc(JSON.stringify(r.metadata||{}))],["Responsável",r=>esc(r.actor_user_id)],["Data",r=>fmtDate(r.created_at)]]);
   }
   function navigate(view) {
     document.querySelectorAll(".view-section").forEach(el=>el.classList.toggle("hidden",el.id!=="view-"+view));
