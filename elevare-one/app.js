@@ -3,6 +3,7 @@
   const cfg = window.ELEVARE_ONE_CONFIG || {};
   const $ = (id) => document.getElementById(id);
   const state = { client: null, user: null, organization: null, membership: null, members: [], recoveryMode: false, isPlatformAdmin: false, organizations: [] };
+  window.ELEVARE_ONE_RUNTIME = { get client(){return state.client;}, get user(){return state.user;}, get organization(){return state.organization;}, get membership(){return state.membership;}, get isPlatformAdmin(){return state.isPlatformAdmin;}, get organizations(){return state.organizations;}, refresh:()=>state.organization?refreshWorkspace():refreshOwnerConsole() };
   const fmtDate = (v) => v ? new Date(v).toLocaleString("pt-BR", { dateStyle:"short", timeStyle:"short" }) : "—";
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const notify = (message, isError=false) => { const el=$("auth-message"); if(el){el.textContent=message;el.style.color=isError?"#e58c8c":"#9ccdb1";} };
@@ -59,6 +60,7 @@
       showApplication();
       await refreshOwnerConsole();
       navigate("owner");
+      document.dispatchEvent(new Event("elevare:context-ready"));
       return true;
     }
 
@@ -85,6 +87,7 @@
     $("user-avatar").textContent=(user.user_metadata?.full_name || user.email || "U").trim().charAt(0).toUpperCase();
     showApplication();
     await refreshWorkspace();
+    document.dispatchEvent(new Event("elevare:context-ready"));
     return true;
   }
   async function refreshOwnerConsole() {
