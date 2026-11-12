@@ -208,7 +208,7 @@
         ],async d=>{const result=await adminRequest({action:"update_name",member_id:member.id,full_name:d.full_name.trim()});workspaceNotice(result.message||"Dados atualizados.");});
         const nameInput=$("field-full_name");if(nameInput)nameInput.value=member.full_name||"";
       } else if(button.dataset.memberAction==="role"){
-        const options=state.membership.role==="owner"
+        const options=(state.isPlatformAdmin||state.membership.role==="owner")
           ?[{value:"owner",label:"Proprietário"},{value:"admin",label:"Administrador"},{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}]
           :[{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}];
         openModal("Alterar perfil de acesso","Usuário: "+(member.full_name||member.email),[
