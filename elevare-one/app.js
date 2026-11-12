@@ -124,7 +124,7 @@
       ["Estado",r=>'<span class="status-badge">'+esc(memberStatusLabel(r.status))+'</span>'],
       ["Último acesso",r=>fmtDate(r.last_sign_in_at)],
       ["Adicionado em",r=>fmtDate(r.created_at)],
-      ...(canManage?[["Ações",r=>r.user_id===state.user.id?'—':'<div class="member-actions"><button type="button" class="text-button member-action" data-member-action="role" data-member-id="'+esc(r.id)+'">Editar perfil</button><button type="button" class="text-button member-action '+(r.status==="active"?'member-danger':'')+'" data-member-action="status" data-member-id="'+esc(r.id)+'" data-next-status="'+(r.status==="active"?'suspended':'active')+'">'+(r.status==="active"?'Suspender':'Reativar')+'</button></div>']]:[])
+      ...(canManage?[["Ações",r=>r.user_id===state.user.id?'—':'<div class="member-actions"><button type="button" class="text-button member-action" data-member-action="name" data-member-id="'+esc(r.id)+'">Editar dados</button><button type="button" class="text-button member-action" data-member-action="role" data-member-id="'+esc(r.id)+'">Editar perfil</button><button type="button" class="text-button member-action '+(r.status==="active"?'member-danger':'')+'" data-member-action="status" data-member-id="'+esc(r.id)+'" data-next-status="'+(r.status==="active"?'suspended':'active')+'">'+(r.status==="active"?'Suspender':'Reativar')+'</button></div>']]:[])
     ]);
   }
 
@@ -148,13 +148,18 @@
       if(!button)return;
       const member=state.members.find(m=>m.id===button.dataset.memberId);
       if(!member)return;
-      if(button.dataset.memberAction==="role"){
+      if(button.dataset.memberAction==="name"){
+        openModal("Editar dados do usuário","Atualize o nome de exibição de "+member.email+".",[
+          {name:"full_name",label:"Nome completo",required:true,maxlength:120}
+        ],async d=>{const result=await adminRequest({action:"update_name",member_id:member.id,full_name:d.full_name.trim()});workspaceNotice(result.message||"Dados atualizados.");});
+        const nameInput=$("field-full_name");if(nameInput)nameInput.value=member.full_name||"";
+      } else if(button.dataset.memberAction==="role"){
         const options=state.membership.role==="owner"
           ?[{value:"owner",label:"Proprietário"},{value:"admin",label:"Administrador"},{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}]
           :[{value:"manager",label:"Gerente"},{value:"member",label:"Membro"},{value:"viewer",label:"Visualizador"}];
         openModal("Alterar perfil de acesso","Usuário: "+(member.full_name||member.email),[
           {name:"role",label:"Novo perfil",type:"select",required:true,options}
-        ],async d=>{const result=await adminRequest({action:"update_role",member_id:member.id,role:d.role});notify(result.message||"Perfil atualizado.");});
+        ],async d=>{const result=await adminRequest({action:"update_role",member_id:member.id,role:d.role});workspaceNotice(result.message||"Perfil atualizado.");});
         const select=$("field-role");if(select)select.value=member.role;
       } else if(button.dataset.memberAction==="status"){
         const next=button.dataset.nextStatus;
