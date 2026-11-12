@@ -1,4 +1,4 @@
 window.ELEVARE_SUPABASE = {
-  url: "https://qggsjccidzvixjukaovl.supabase.co",
-  publishableKey: "sb_publishable_Y9mg8r-1bjeY9dArUhxJTQ_AfsqtjUq"
+  url: "https://qluiazkmyoaietehdjtf.supabase.co",
+  publishableKey: "sb_publishable_c0D1I8AukXoJA3y8iy-fVw_oHjflY-5"
 };
