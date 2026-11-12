@@ -276,7 +276,7 @@
       if(!email){notify("Informe seu e-mail corporativo para receber o link de ativação ou recuperação.",true);$("email").focus();return;}
       const button=$("forgot-password-button");button.disabled=true;
       try{
-        const {error}=await state.client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+"/"});
+        const {error}=await state.client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
         if(error) throw error;
         notify("Se o endereço estiver cadastrado, enviaremos um link para definir ou redefinir sua senha. Verifique sua caixa de entrada e spam.");
       }catch(err){console.error("[ELEVARE ONE] password recovery",err);const code=err?.code||err?.error_code||"";const status=err?.status||err?.statusCode||0;if(code==="over_email_send_rate_limit"||status===429){notify("Limite temporário de envio de e-mails atingido. Não solicite novos links agora; aguarde a liberação do Supabase ou use o suporte administrativo.",true);}else{notify("Não foi possível enviar o link: "+(err?.message||"erro de autenticação")+". Verifique a configuração de e-mail ou contate o administrador.",true);}}
