@@ -22,10 +22,19 @@
       <div class="mobile-mark wordmark"><span class="brand-symbol">E</span><span>ELEVARE <b>ONE</b></span></div>
       <span class="eyebrow">ACESSO CORPORATIVO</span><h2>Entre na sua organização</h2><p class="muted">Utilize suas credenciais corporativas para continuar.</p>
       <label for="email">E-mail corporativo</label><input id="email" name="email" type="email" autocomplete="username" placeholder="nome@empresa.com" required>
-      <label for="password">Senha</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+      <label for="password">Senha</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Sua senha" required><button id="forgot-password-button" class="auth-link" type="button">Esqueci minha senha / primeiro acesso</button>
       <button id="login-button" class="primary-button" type="submit">Entrar na plataforma <span>→</span></button>
       <p id="auth-message" class="form-message" role="status" aria-live="polite"></p>
       <div class="security-note"><span class="lock-icon">▣</span> Acesso protegido e monitorado</div>
+    </form>
+    <form id="set-password-form" class="login-card hidden">
+      <div class="mobile-mark wordmark"><span class="brand-symbol">E</span><span>ELEVARE <b>ONE</b></span></div>
+      <span class="eyebrow">ATIVAÇÃO DE CONTA</span><h2>Defina sua senha</h2><p class="muted">Crie uma senha segura para acessar sua organização.</p>
+      <label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="12" placeholder="Mínimo de 12 caracteres" required>
+      <label for="confirm-password">Confirme a nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="12" placeholder="Digite novamente" required>
+      <button id="save-password-button" class="primary-button" type="submit">Salvar senha <span>→</span></button>
+      <p id="password-message" class="form-message" role="status" aria-live="polite"></p>
+      <button id="back-to-login-button" class="auth-link" type="button">Voltar ao login</button>
     </form>
     <footer>© <span id="year"></span> ELEVARE DEV. Todos os direitos reservados.</footer>
   </section>
